@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Demo with RDS</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        form { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #e9ecef; }
+        input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .message-list { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .success { color: green; font-weight: bold; margin-bottom: 10px; }
+        .error { color: red; font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>網頁 Demo - RDS 資料庫互動</h1>
+
+        {% if success %}
+            <p class="success">{{ success }}</p>
+        {% endif %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <h2>輸入新訊息</h2>
+        <form method="POST" action="/">
+            <input type="text" name="message_text" placeholder="在這裡輸入您的訊息" required>
+            <button type="submit">儲存訊息</button>
+        </form>
+
+        <h2>已儲存訊息</h2>
+        <div class="message-list">
+            {% if messages %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>訊息內容</th>
+                            <th>建立時間</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in messages %}
+                            <tr>
+                                <td>{{ message.id }}</td>
+                                <td>{{ message.message_text }}</td>
+                                <td>{{ message.created_at }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>目前沒有訊息。</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

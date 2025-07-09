@@ -14,6 +14,7 @@ DB_PASSWORD = "55439147zhjf"
 DB_NAME = "moodle-aurora-cluster"
 # --- 更改結束 ---
 
+
 def get_db_connection():
     try:
         # For PostgreSQL
@@ -28,57 +29,70 @@ def get_db_connection():
         print(f"Error connecting to database: {e}")
         return None
 
-@app.route('/')
+# 新增一個主頁路由，用於顯示表單和資料
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return "Welcome to the Web Demo! Try /create and /read."
+    if request.method == 'POST':
+        message = request.form.get('message_text') # 從表單獲取數據
+        if not message:
+            # 簡單錯誤處理，實際應用中可以做得更完善
+            messages = get_all_messages()
+            return render_template('index.html', error="請輸入訊息！", messages=messages)
 
-@app.route('/create', methods=['POST'])
-def create_data():
-    data = request.json
-    if not data or 'message' not in data:
-        return jsonify({"error": "Message field is required"}), 400
+        conn = get_db_connection()
+        if conn is None:
+            messages = get_all_messages()
+            return render_template('index.html', error="資料庫連接失敗！", messages=messages)
 
-    message = data['message']
+        try:
+            with conn.cursor() as cursor:
+                sql = "INSERT INTO messages (message_text) VALUES (%s)"
+                cursor.execute(sql, (message,))
+            conn.commit()
+            # 插入成功後，重定向到 GET 請求，以避免重複提交
+            return render_template('index.html', success="訊息已成功儲存！", messages=get_all_messages())
+        except Exception as e:
+            conn.rollback()
+            messages = get_all_messages()
+            return render_template('index.html', error=f"儲存失敗：{e}", messages=messages)
+        finally:
+            conn.close()
+    else: # GET 請求
+        messages = get_all_messages()
+        return render_template('index.html', messages=messages)
+
+# 輔助函數：獲取所有訊息
+def get_all_messages():
     conn = get_db_connection()
     if conn is None:
-        return jsonify({"error": "Database connection failed"}), 500
-
-    try:
-        with conn.cursor() as cursor:
-            # PostgreSQL 使用 %s 作為參數佔位符
-            sql = "INSERT INTO messages (message_text) VALUES (%s)"
-            cursor.execute(sql, (message,))
-        conn.commit()
-        return jsonify({"status": "success", "message": "Data created successfully"}), 201
-    except Exception as e:
-        conn.rollback()
-        return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
-
-@app.route('/read', methods=['GET'])
-def read_data():
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({"error": "Database connection failed"}), 500
+        return [] # 如果連接失敗，返回空列表
 
     try:
         with conn.cursor() as cursor:
             sql = "SELECT id, message_text, created_at FROM messages ORDER BY created_at DESC"
             cursor.execute(sql)
-            # psycopg2 fetchall() 返回元組列表，需要手動轉換為字典
             result = []
             for row in cursor.fetchall():
                 result.append({
                     "id": row[0],
                     "message_text": row[1],
-                    "created_at": row[2].isoformat() # 將 datetime 對象轉換為 ISO 格式字符串
+                    "created_at": row[2].strftime("%Y-%m-%d %H:%M:%S") # 格式化時間
                 })
-        return jsonify(result), 200
+        return result
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error reading from database: {e}")
+        return []
     finally:
         conn.close()
+
+# 移除原有的 /create 和 /read 路由，因為它們的功能已經整合到 '/' 路由中
+# @app.route('/create', methods=['POST'])
+# def create_data():
+#     ...
+
+# @app.route('/read', methods=['GET'])
+# def read_data():
+#     ...
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
