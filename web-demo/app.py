@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template 
 import psycopg2 # <--- 更改這裡：使用 psycopg2 連接 PostgreSQL
 
 app = Flask(__name__)
