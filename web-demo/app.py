@@ -11,7 +11,7 @@ DB_USER = "moodleadmin"
 # 替換為您的 Aurora PostgreSQL 密碼
 DB_PASSWORD = "55439147zhjf"
 # 替換為您在 Aurora PostgreSQL 中創建的資料庫名稱
-DB_NAME = "moodle-aurora-cluster"
+DB_NAME = "webdemo"
 # --- 更改結束 ---
 
 
